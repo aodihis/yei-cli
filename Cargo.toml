@@ -1,0 +1,20 @@
+[package]
+name = "yei"
+version = "0.1.0"
+edition = "2021"
+description = "CLI to add Yew UI components to your project"
+license = "MIT"
+repository = "https://github.com/aodihis/yei-cli"
+
+[[bin]]
+name = "yei"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+colored = "2"
