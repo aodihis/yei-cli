@@ -63,6 +63,16 @@ impl Client {
         resp.text().await.context("Failed to read component source")
     }
 
+    pub async fn fetch_style(&self) -> Result<String> {
+        let url = format!("{}/style", self.base_url);
+        let resp = self.http.get(&url).send().await
+            .with_context(|| format!("Failed to fetch yei.css from {url}"))?;
+        if !resp.status().is_success() {
+            bail!("Server returned {} for /style", resp.status());
+        }
+        resp.text().await.context("Failed to read style response")
+    }
+
     pub async fn fetch_versions(&self) -> Result<Vec<String>> {
         let url = format!("{}/versions", self.base_url);
         let resp = self.http.get(&url).send().await
