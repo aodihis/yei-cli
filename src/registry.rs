@@ -13,6 +13,8 @@ pub struct ComponentMeta {
     pub name: String,
     pub description: String,
     pub files: Vec<String>,
+    #[serde(default)]
+    pub deps: Vec<String>,
     pub cargo_deps: Vec<CargoDep>,
 }
 
