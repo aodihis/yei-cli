@@ -3,8 +3,11 @@ use colored::Colorize;
 use std::collections::VecDeque;
 use std::fs;
 use std::path::PathBuf;
-use crate::config::{read_config, read_lock, write_lock, LockFile};
+use crate::config::{read_config, read_lock, write_lock, Config, LockFile};
 use crate::registry::{Client, Registry};
+
+/// The module path used in component source files on the registry.
+const REGISTRY_MODULE_PATH: &str = "crate::components";
 
 pub async fn run(components: Vec<String>, version_override: Option<String>) -> Result<()> {
     if components.is_empty() {
@@ -21,12 +24,8 @@ pub async fn run(components: Vec<String>, version_override: Option<String>) -> R
     let version = version_override.unwrap_or_else(|| config.version.clone());
     let registry = client.fetch_registry(&version).await?;
 
-    // Resolve the full install order: deps first, then the requested components.
-    // Uses BFS so each name appears only once and deps always precede dependents.
-    let mut queue: VecDeque<String> = components
-        .iter()
-        .map(|raw| parse_name(raw))
-        .collect();
+    // Resolve full install order: deps first, then requested components (BFS).
+    let mut queue: VecDeque<String> = components.iter().map(|r| parse_name(r)).collect();
     let mut ordered: Vec<String> = Vec::new();
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
@@ -34,7 +33,6 @@ pub async fn run(components: Vec<String>, version_override: Option<String>) -> R
         if seen.contains(&name) { continue; }
         seen.insert(name.clone());
 
-        // Push deps before the component itself
         if let Some(meta) = registry.components.iter().find(|c| c.name == name) {
             for dep in &meta.deps {
                 if !seen.contains(dep) {
@@ -47,7 +45,7 @@ pub async fn run(components: Vec<String>, version_override: Option<String>) -> R
     }
 
     for name in &ordered {
-        install_one(name, &version, &client, &registry, &out, &mut lock).await?;
+        install_one(name, &version, &client, &registry, &out, &mut lock, &config).await?;
     }
 
     write_lock(&lock)?;
@@ -61,6 +59,7 @@ async fn install_one(
     registry: &Registry,
     out: &PathBuf,
     lock: &mut LockFile,
+    config: &Config,
 ) -> Result<()> {
     if lock.components.contains_key(name) {
         println!("{} {} already installed", "·".dimmed(), name);
@@ -71,6 +70,7 @@ async fn install_one(
         if version == "latest" { String::new() } else { format!("@{version}") });
 
     let source = client.fetch_component(name, version).await?;
+    let source = rewrite_imports(source, &config.effective_module_path());
     let dest = out.join(format!("{name}.rs"));
     fs::write(&dest, &source)?;
 
@@ -94,6 +94,17 @@ async fn install_one(
     }
 
     Ok(())
+}
+
+/// Replaces the registry's hardcoded module path with the user's configured one.
+fn rewrite_imports(source: String, module_path: &str) -> String {
+    if module_path == REGISTRY_MODULE_PATH {
+        return source;
+    }
+    source.replace(
+        &format!("use {REGISTRY_MODULE_PATH}::"),
+        &format!("use {module_path}::"),
+    )
 }
 
 fn parse_name(raw: &str) -> String {

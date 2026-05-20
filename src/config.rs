@@ -12,6 +12,10 @@ pub struct Config {
     pub registry: String,
     pub version: String,
     pub output_path: String,
+    /// Rust module path where components live (e.g. "crate::components").
+    /// Derived from output_path if not set explicitly.
+    #[serde(default)]
+    pub module_path: String,
 }
 
 impl Default for Config {
@@ -20,7 +24,22 @@ impl Default for Config {
             registry: DEFAULT_REGISTRY.to_string(),
             version: "latest".to_string(),
             output_path: "src/components".to_string(),
+            module_path: String::new(),
         }
+    }
+}
+
+impl Config {
+    /// Returns the effective module path, deriving it from output_path if not
+    /// set explicitly. "src/foo/bar" → "crate::foo::bar".
+    pub fn effective_module_path(&self) -> String {
+        if !self.module_path.is_empty() {
+            return self.module_path.clone();
+        }
+        let stripped = self.output_path
+            .trim_start_matches("src/")
+            .trim_start_matches("src\\");
+        format!("crate::{}", stripped.replace('\\', "::").replace('/', "::"))
     }
 }
 

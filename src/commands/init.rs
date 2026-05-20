@@ -61,6 +61,7 @@ pub async fn run() -> Result<()> {
         registry: Config::default().registry,
         version: "latest".to_string(),
         output_path: output_path.clone(),
+        module_path: String::new(),
     };
     let client = Client::new(&config.registry);
     let css_content = client.fetch_style().await
@@ -110,6 +111,12 @@ pub async fn run() -> Result<()> {
     // --- Write yei.json ---
     write_config(&config)?;
     println!("{} Created yei.json", "✓".green());
+
+    // --- Install icons as a core utility (used by most components) ---
+    println!();
+    println!("Installing core utilities...");
+    super::add::run(vec!["icons".to_string()], None).await
+        .unwrap_or_else(|e| println!("{} Could not install icons: {e}", "⚠".yellow()));
 
     // --- Inject :root token defaults into the CSS entry file ---
     let root_marker = "/* yei tokens */";
