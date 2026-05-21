@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 
 const CONFIG_FILE: &str = "yei.json";
 const LOCK_FILE: &str = "yei.lock";
-const DEFAULT_REGISTRY: &str = "https://yei.yourdomain.com";
+const DEFAULT_REGISTRY: &str = "https://yei-api.aodihis.com";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {

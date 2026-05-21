@@ -1,31 +1,4 @@
 use anyhow::{Context, Result};
-
-const YEI_ROOT_TOKENS: &str = r#":root {
-  --background:            oklch(1 0 0);
-  --foreground:            oklch(0.145 0 0);
-
-  --primary:               oklch(0.205 0 0);
-  --primary-foreground:    oklch(0.985 0 0);
-
-  --secondary:             oklch(0.97 0 0);
-  --secondary-foreground:  oklch(0.205 0 0);
-
-  --danger:                oklch(0.577 0.245 27.325);
-  --on-danger:             oklch(0.985 0 0);
-
-  --muted:                 oklch(0.97 0 0);
-  --muted-foreground:      oklch(0.205 0 0);
-
-  --success:               oklch(0.527 0.154 150);
-  --warning:               oklch(0.769 0.188 70);
-
-  --field:                 oklch(0.97 0 0);
-  --border:                oklch(0.922 0 0);
-  --focus:                 oklch(0.708 0 0);
-
-  --radius:                0.625rem;
-}
-"#;
 use colored::Colorize;
 use dialoguer::{Input, theme::ColorfulTheme};
 use std::path::{Path, PathBuf};
@@ -117,20 +90,6 @@ pub async fn run() -> Result<()> {
     println!("Installing core utilities...");
     super::add::run(vec!["icons".to_string()], None).await
         .unwrap_or_else(|e| println!("{} Could not install icons: {e}", "⚠".yellow()));
-
-    // --- Inject :root token defaults into the CSS entry file ---
-    let root_marker = "/* yei tokens */";
-    let existing_css = std::fs::read_to_string(css_entry_path)
-        .with_context(|| format!("Could not read {css_entry}"))?;
-    if existing_css.contains(root_marker) {
-        println!("{} {} already contains yei token defaults", "·".dimmed(), css_entry);
-    } else {
-        let root_block = format!("\n{root_marker}\n{YEI_ROOT_TOKENS}");
-        let updated = format!("{}\n{}", existing_css.trim_end(), root_block);
-        std::fs::write(css_entry_path, updated)
-            .with_context(|| format!("Could not update {css_entry}"))?;
-        println!("{} Added token defaults to {}", "✓".green(), css_entry);
-    }
 
     // --- Print Trunk instructions ---
     println!();

@@ -12,10 +12,10 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-reqwest = { version = "0.12", features = ["json", "blocking"] }
+reqwest = { version = "0.13.3", features = ["json", "blocking"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-colored = "2"
-dialoguer = "0.11"
+colored = "3.1.1"
+dialoguer = "0.12.0"
