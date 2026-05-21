@@ -76,8 +76,19 @@ async fn install_one(
 
     lock.components.insert(name.to_string(), version.to_string());
 
+    // Append to mod.rs if it exists and the entry isn't already there
+    let mod_path = out.join("mod.rs");
+    let mod_line = format!("pub mod {name};\n");
+    if mod_path.exists() {
+        let existing = fs::read_to_string(&mod_path)?;
+        if !existing.contains(&mod_line.trim_end().to_string()) {
+            let mut file = fs::OpenOptions::new().append(true).open(&mod_path)?;
+            use std::io::Write;
+            file.write_all(mod_line.as_bytes())?;
+        }
+    }
+
     println!("{} Added {} → {}", "✓".green(), name.green().bold(), dest.display());
-    println!("  Add to your mod.rs:  {}", format!("pub mod {name};").cyan());
 
     if let Some(meta) = registry.components.iter().find(|c| c.name == name) {
         if !meta.cargo_deps.is_empty() {

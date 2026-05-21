@@ -76,10 +76,17 @@ pub async fn run() -> Result<()> {
         println!("{} Created {}", "✓".green(), css_entry);
     }
 
-    // --- Create component output directory ---
+    // --- Create component output directory and mod.rs ---
     std::fs::create_dir_all(&output_path)
         .with_context(|| format!("Could not create {output_path}"))?;
     println!("{} Created {}/", "✓".green(), output_path);
+
+    let mod_path = PathBuf::from(&output_path).join("mod.rs");
+    if !mod_path.exists() {
+        std::fs::write(&mod_path, "")
+            .with_context(|| format!("Could not create {}", mod_path.display()))?;
+        println!("{} Created {}/mod.rs", "✓".green(), output_path);
+    }
 
     // --- Write yei.json ---
     write_config(&config)?;
